@@ -73,12 +73,17 @@ export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay, 
         </div>
 
         {/* Album Ảnh kỷ niệm (nếu có) */}
-        {images.length > 0 && (
+        {images.length > 0 && Boolean(images[currentImgIndex]) && (
           <div className="relative mb-5 group">
             <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-midnight-950/80 border border-white/15 shadow-inner">
               <img
                 src={images[currentImgIndex]}
                 alt="Ảnh kỷ niệm"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.onerror = null;
+                  target.src = 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80';
+                }}
                 className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               />
               <button
@@ -172,6 +177,11 @@ export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay, 
           <img
             src={images[currentImgIndex]}
             alt="Ảnh kỷ niệm"
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.onerror = null;
+              target.src = 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80';
+            }}
             className="max-w-full max-h-[90vh] object-contain rounded-xl"
           />
         </div>

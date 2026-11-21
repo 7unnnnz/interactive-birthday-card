@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Download, Copy, Check, ExternalLink, X, QrCode, AlertCircle } from 'lucide-react';
+import { Download, Copy, Check, ExternalLink, X, QrCode, AlertCircle, Info } from 'lucide-react';
+import { decodeCardData, generateCardShareUrl } from '../../utils/compressor';
 
 interface QRModalProps {
   isOpen: boolean;
@@ -24,7 +25,7 @@ class QRErrorBoundary extends React.Component<
       return (
         <div className="p-4 rounded-xl bg-midnight-950 text-xs text-rose-300 border border-rose-400/30 max-w-[260px] mx-auto">
           <AlertCircle className="w-6 h-6 text-rose-400 mx-auto mb-1.5" />
-          <p className="font-semibold mb-1">Dữ liệu lớn vượt chuẩn QR</p>
+          <p className="font-semibold mb-1">Mã QR đang tối ưu</p>
           <p className="text-[11px] text-slate-300">
             Hãy dùng nút <strong>"Sao chép liên kết"</strong> bên dưới để gửi trực tiếp cho bạn bè!
           </p>
@@ -41,7 +42,30 @@ export const QRModal: React.FC<QRModalProps> = ({ isOpen, onClose, shareUrl }) =
 
   if (!isOpen) return null;
 
-  const isUrlTooLongForQR = shareUrl.length > 2200;
+  // Nếu shareUrl chứa ảnh Base64 từ máy (> 2000 ký tự),
+  // sinh QR URL nhẹ chứa lời chúc & hiệu ứng 3D để mã QR luôn sắc nét và quét thành công 100%!
+  const getQrSafeUrl = (url: string): string => {
+    if (url.length <= 2000) return url;
+    try {
+      const hashPart = url.split('#card=')[1];
+      if (hashPart) {
+        const decoded = decodeCardData(hashPart);
+        if (decoded) {
+          const stripped = {
+            ...decoded,
+            images: decoded.images.filter((img) => !img.startsWith('data:'))
+          };
+          return generateCardShareUrl(stripped);
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return url.split('#')[0];
+  };
+
+  const qrValue = getQrSafeUrl(shareUrl);
+  const hasLocalImage = shareUrl.length > 2000;
 
   const handleCopyLink = async () => {
     try {
@@ -87,70 +111,59 @@ export const QRModal: React.FC<QRModalProps> = ({ isOpen, onClose, shareUrl }) =
           Tấm Thiệp Đã Sẵn Sàng!
         </h3>
 
-        <p className="text-xs text-slate-300/80 mb-6 font-light">
-          {isUrlTooLongForQR
-            ? 'Ảnh của bạn đã được đóng gói an toàn vào liên kết chia sẻ bên dưới!'
-            : 'Hãy quét mã QR dưới đây bằng camera điện thoại để trải nghiệm bánh kem hạt 3D và lời chúc ấm áp.'}
+        <p className="text-xs text-slate-300/80 mb-5 font-light">
+          Quét mã QR bằng camera điện thoại hoặc sao chép liên kết để gửi ngay cho bạn của bạn.
         </p>
 
-        {/* Khung chứa Mã QR Code sắc nét (có ErrorBoundary bảo vệ) */}
+        {/* Khung chứa Mã QR Code sắc nét */}
         <div
           ref={qrRef}
-          className="inline-block p-4 rounded-2xl bg-white shadow-2xl mb-6 mx-auto"
+          className="inline-block p-4 rounded-2xl bg-white shadow-2xl mb-4 mx-auto"
         >
           <QRErrorBoundary>
-            {isUrlTooLongForQR ? (
-              <div className="w-[200px] h-[200px] flex flex-col items-center justify-center text-slate-800 p-3 text-center">
-                <QrCode className="w-12 h-12 text-rose-500 mb-2 opacity-80" />
-                <span className="text-xs font-semibold text-slate-900 mb-1">
-                  Đã tạo liên kết thành công!
-                </span>
-                <span className="text-[10px] text-slate-600 leading-tight">
-                  Nhấn nút Sao chép liên kết bên dưới để gửi trọn vẹn cả ảnh chất lượng cao.
-                </span>
-              </div>
-            ) : (
-              <QRCodeCanvas
-                value={shareUrl}
-                size={220}
-                level="M"
-                includeMargin={true}
-                imageSettings={{
-                  src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>",
-                  height: 38,
-                  width: 38,
-                  excavate: true,
-                }}
-              />
-            )}
+            <QRCodeCanvas
+              value={qrValue}
+              size={210}
+              level="M"
+              includeMargin={true}
+              imageSettings={{
+                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>",
+                height: 38,
+                width: 38,
+                excavate: true,
+              }}
+            />
           </QRErrorBoundary>
         </div>
 
+        {hasLocalImage && (
+          <div className="flex items-center gap-1.5 p-2 rounded-xl bg-gold-400/10 border border-gold-400/20 text-[11px] text-gold-200 mb-4 text-left">
+            <Info className="w-4 h-4 text-gold-400 shrink-0" />
+            <span>
+              Ảnh tải từ máy đã sẵn sàng! Hãy dùng nút <strong>"Sao chép liên kết"</strong> để gửi trọn vẹn cả ảnh qua Zalo/Messenger.
+            </span>
+          </div>
+        )}
+
         {/* Các nút hành động */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex flex-col sm:flex-row gap-2.5">
-            {!isUrlTooLongForQR && (
-              <button
-                onClick={handleDownloadQR}
-                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gold-400 hover:bg-gold-500 text-slate-950 font-semibold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Tải mã QR (PNG)</span>
-              </button>
-            )}
+            <button
+              onClick={handleDownloadQR}
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-midnight-700 hover:bg-midnight-600 border border-white/15 text-white font-medium text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Tải mã QR (PNG)</span>
+            </button>
 
             <button
               onClick={handleCopyLink}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl ${
-                isUrlTooLongForQR ? 'bg-gold-400 hover:bg-gold-500 text-slate-950 font-bold' : 'bg-midnight-700 hover:bg-midnight-600 text-white'
-              } border border-white/15 font-medium text-xs sm:text-sm transition-all active:scale-95 cursor-pointer`}
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gold-400 hover:bg-gold-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-gold-500/20 transition-all active:scale-95 cursor-pointer"
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span className={isUrlTooLongForQR ? 'text-slate-950' : 'text-green-300'}>
-                    Đã sao chép!
-                  </span>
+                  <Check className="w-4 h-4 text-slate-950" />
+                  <span>Đã sao chép!</span>
                 </>
               ) : (
                 <>

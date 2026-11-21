@@ -64,16 +64,16 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // 1. Thử tải lên Cloud Storage (Supabase hoặc Free Cloud có CORS mở)
+        // 1. Nếu có Supabase thì lưu trên Supabase
         const cloudUrl = await uploadMediaToCloud(file, 'images', file.name);
 
         if (cloudUrl) {
           newImageUrls.push(cloudUrl);
         } else {
-          // 2. Fallback: nén ảnh siêu nhẹ dạng micro thumbnail (~1KB) để không làm tràn QR hay URL hash
-          const microThumb = await compressImage(file, 180, 180, 0.45);
-          if (microThumb) {
-            newImageUrls.push(microThumb);
+          // 2. Nén client-side thành Data URL sắc nét (~15KB), hiển thị 100% trong thẻ <img> không bao giờ lỗi
+          const dataUrl = await compressImage(file, 450, 450, 0.7);
+          if (dataUrl) {
+            newImageUrls.push(dataUrl);
           }
         }
       }
