@@ -1,0 +1,126 @@
+import React, { useRef, useState } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
+import { Download, Copy, Check, ExternalLink, X, QrCode } from 'lucide-react';
+
+interface QRModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  shareUrl: string;
+}
+
+export const QRModal: React.FC<QRModalProps> = ({ isOpen, onClose, shareUrl }) => {
+  const [copied, setCopied] = useState(false);
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  if (!isOpen) return null;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.warn('Copy failed', err);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (!qrRef.current) return;
+    const canvas = qrRef.current.querySelector('canvas');
+    if (!canvas) return;
+
+    const link = document.createElement('a');
+    link.download = `Thiep_Sinh_Nhat_QR_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md glass-panel-gold rounded-3xl p-6 sm:p-8 text-center border border-white/20 shadow-2xl">
+        {/* Nút đóng modal */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Tiêu đề */}
+        <div className="flex items-center justify-center gap-2 mb-2 text-gold-400">
+          <QrCode className="w-5 h-5" />
+          <span className="text-xs uppercase tracking-wider font-semibold">
+            Mã QR Thiệp Sinh Nhật
+          </span>
+        </div>
+
+        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+          Tấm Thiệp Đã Sẵn Sàng!
+        </h3>
+
+        <p className="text-xs text-slate-300/80 mb-6 font-light">
+          Hãy quét mã QR dưới đây bằng camera điện thoại để trải nghiệm bánh kem hạt 3D và lời chúc ấm áp.
+        </p>
+
+        {/* Khung chứa Mã QR Code sắc nét */}
+        <div
+          ref={qrRef}
+          className="inline-block p-4 rounded-2xl bg-white shadow-2xl mb-6 mx-auto"
+        >
+          <QRCodeCanvas
+            value={shareUrl}
+            size={220}
+            level="M"
+            includeMargin={true}
+            imageSettings={{
+              src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>",
+              height: 40,
+              width: 40,
+              excavate: true,
+            }}
+          />
+        </div>
+
+        {/* Các nút hành động */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <button
+              onClick={handleDownloadQR}
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gold-400 hover:bg-gold-500 text-slate-950 font-semibold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Tải mã QR (PNG)</span>
+            </button>
+
+            <button
+              onClick={handleCopyLink}
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-midnight-700 hover:bg-midnight-600 border border-white/15 text-white font-medium text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span className="text-green-300">Đã sao chép!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-slate-300" />
+                  <span>Sao chép liên kết</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <a
+            href={shareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-rose-300 hover:text-rose-200 text-xs font-medium hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Mở thử trang nhận thiệp trên tab mới</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
