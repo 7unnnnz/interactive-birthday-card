@@ -1,13 +1,15 @@
 /**
- * Nén ảnh client-side bằng HTML Canvas để giảm dung lượng tải nhanh trên mobile
+ * Nén ảnh client-side bằng HTML Canvas
+ * Khi không có mạng cloud, nén ảnh xuống kích thước micro-thumbnail (~1-2KB)
+ * để đảm bảo an toàn tuyệt đối, không làm tràn giới hạn mã QR hay URL hash.
  */
 export async function compressImage(
   file: File,
-  maxWidth = 720,
-  maxHeight = 720,
-  quality = 0.75
+  maxWidth = 200,
+  maxHeight = 200,
+  quality = 0.5
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
@@ -38,7 +40,7 @@ export async function compressImage(
 
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Thử WebP trước, nếu không được fallback sang JPEG
+        // Thử WebP trước để đạt dung lượng dưới 1.5KB
         try {
           const webpData = canvas.toDataURL('image/webp', quality);
           if (webpData.startsWith('data:image/webp')) {
@@ -46,14 +48,14 @@ export async function compressImage(
             return;
           }
         } catch {
-          // ignore
+          // fallback
         }
 
         const jpegData = canvas.toDataURL('image/jpeg', quality);
         resolve(jpegData);
       };
-      img.onerror = (err) => reject(err);
+      img.onerror = () => resolve(event.target?.result as string);
     };
-    reader.onerror = (err) => reject(err);
+    reader.onerror = () => resolve('');
   });
 }

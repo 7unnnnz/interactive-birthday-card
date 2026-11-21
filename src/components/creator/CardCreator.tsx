@@ -64,15 +64,17 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // 1. Thử tải lên Supabase Storage nếu có cấu hình
+        // 1. Thử tải lên Cloud Storage (Supabase hoặc Free Cloud có CORS mở)
         const cloudUrl = await uploadMediaToCloud(file, 'images', file.name);
 
         if (cloudUrl) {
           newImageUrls.push(cloudUrl);
         } else {
-          // 2. Tự động nén qua HTML Canvas tạo ảnh siêu nhẹ để nhúng vào URL hash
-          const compressedDataUrl = await compressImage(file, 640, 640, 0.72);
-          newImageUrls.push(compressedDataUrl);
+          // 2. Fallback: nén ảnh siêu nhẹ dạng micro thumbnail (~1KB) để không làm tràn QR hay URL hash
+          const microThumb = await compressImage(file, 180, 180, 0.45);
+          if (microThumb) {
+            newImageUrls.push(microThumb);
+          }
         }
       }
 
@@ -125,8 +127,12 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
     }
 
     const hashMatch = url.match(/#card=.+/);
-    if (hashMatch) {
-      window.history.replaceState(null, '', hashMatch[0]);
+    if (hashMatch && hashMatch[0].length < 2400) {
+      try {
+        window.history.replaceState(null, '', hashMatch[0]);
+      } catch (err) {
+        console.warn('replaceState warning:', err);
+      }
     }
   };
 
@@ -140,8 +146,12 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
     }
     const url = generateCardShareUrl(cardToSave);
     const hashMatch = url.match(/#card=.+/);
-    if (hashMatch) {
-      window.history.replaceState(null, '', hashMatch[0]);
+    if (hashMatch && hashMatch[0].length < 2400) {
+      try {
+        window.history.replaceState(null, '', hashMatch[0]);
+      } catch (err) {
+        console.warn('replaceState warning:', err);
+      }
     }
     if (onClose) {
       onClose();
@@ -310,10 +320,10 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
               <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-dashed border-white/25 hover:border-gold-400/50 bg-midnight-950/40 hover:bg-midnight-950/60 transition-all cursor-pointer">
                 <ImagePlus className="w-6 h-6 text-gold-300 mb-1.5" />
                 <span className="text-xs font-medium text-slate-200">
-                  Tải lên ảnh từ thiết bị
+                  {isCompressingImages ? 'Đang tải và tối ưu ảnh...' : 'Tải lên ảnh từ thiết bị'}
                 </span>
                 <span className="text-[10px] text-slate-400 mt-0.5 font-light">
-                  Tự động tối ưu dung lượng cho điện thoại di động
+                  Tự động đồng bộ lên cloud để quét mã QR chéo thiết bị
                 </span>
                 <input
                   type="file"
@@ -321,8 +331,48 @@ export const CardCreator: React.FC<CardCreatorProps> = ({
                   multiple
                   onChange={handlePhotoUpload}
                   className="hidden"
+                  disabled={isCompressingImages}
                 />
               </label>
+
+              {/* Dán link ảnh online trực tiếp */}
+              <div className="flex gap-2 mt-2.5">
+                <input
+                  type="url"
+                  placeholder="Hoặc dán đường link ảnh (https://...)"
+                  id="direct-image-url"
+                  className="flex-1 px-3 py-1.5 rounded-xl glass-input text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const target = e.currentTarget;
+                      if (target.value.trim()) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          images: [...prev.images, target.value.trim()],
+                        }));
+                        target.value = '';
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.getElementById('direct-image-url') as HTMLInputElement;
+                    if (input && input.value.trim()) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        images: [...prev.images, input.value.trim()],
+                      }));
+                      input.value = '';
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs text-slate-200 font-medium transition-colors"
+                >
+                  Thêm
+                </button>
+              </div>
             </div>
 
             {/* 5. Nhạc nền sinh nhật */}
