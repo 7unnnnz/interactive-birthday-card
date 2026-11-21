@@ -18,10 +18,19 @@ export const App: React.FC = () => {
   // Kiểm tra URL hash khi load trang
   useEffect(() => {
     const handleCheckUrl = () => {
-      const dataFromUrl = getCardDataFromUrl();
-      if (dataFromUrl) {
-        setCardData(dataFromUrl);
-      } else {
+      try {
+        const dataFromUrl = getCardDataFromUrl();
+        if (dataFromUrl) {
+          setCardData(dataFromUrl);
+        } else {
+          setCardData(DEFAULT_CARD_DATA);
+          // Tự động dọn dẹp URL hash cũ bị hỏng để trang luôn hiển thị thiệp mượt mà
+          if (window.location.hash && window.location.hash.includes('card=')) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi phân tích URL được phục hồi an toàn:', err);
         setCardData(DEFAULT_CARD_DATA);
       }
     };
