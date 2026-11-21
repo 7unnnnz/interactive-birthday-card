@@ -65,7 +65,7 @@ export const App: React.FC = () => {
   const activeCard = cardData || DEFAULT_CARD_DATA;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#080510] select-none">
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#080510] select-none">
       {/* 1. Màn hình mở đầu (Invitation Gate Screen) */}
       {phase === 'gate' && (
         <InvitationGate

@@ -91,7 +91,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ musicUrl, autoPlay = f
   };
 
   return (
-    <div className="fixed top-5 right-5 z-40 flex items-center gap-2">
+    <div className="fixed top-4 right-4 sm:top-5 sm:right-5 z-40 flex items-center gap-2">
       <button
         onClick={togglePlay}
         className="flex items-center gap-2.5 px-3.5 py-2 rounded-full glass-panel text-white hover:text-gold-300 shadow-xl border border-white/15 hover:border-gold-400/40 transition-all cursor-pointer group active:scale-95"

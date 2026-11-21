@@ -1,25 +1,28 @@
 import { MusicPreset, CardData } from '../types/card';
 
+const base = import.meta.env.BASE_URL || './';
+const audioBase = base.endsWith('/') ? base : `${base}/`;
+
 export const MUSIC_PRESETS: MusicPreset[] = [
   {
     id: 'piano-acoustic',
     name: 'Acoustic Piano Birthday',
     genre: 'Dịu dàng & Ấm áp',
-    url: '/audio/piano-birthday.wav',
+    url: `${audioBase}audio/piano-birthday.wav`,
     isBuiltIn: true
   },
   {
     id: 'music-box',
     name: 'Music Box Melody',
     genre: 'Trong trẻo & Hoài niệm',
-    url: '/audio/musicbox-birthday.wav',
+    url: `${audioBase}audio/musicbox-birthday.wav`,
     isBuiltIn: true
   },
   {
     id: 'lofi-chill',
     name: 'Lo-Fi Chill Starlight',
     genre: 'Thư giãn & Hiện đại',
-    url: '/audio/lofi-birthday.wav',
+    url: `${audioBase}audio/lofi-birthday.wav`,
     isBuiltIn: true
   }
 ];
@@ -32,7 +35,7 @@ export const DEFAULT_CARD_DATA: CardData = {
     'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
   ],
   musicPreset: 'piano-acoustic',
-  musicUrl: '/audio/piano-birthday.wav',
+  musicUrl: `${audioBase}audio/piano-birthday.wav`,
   theme: 'velvet',
   createdAt: Date.now()
 };

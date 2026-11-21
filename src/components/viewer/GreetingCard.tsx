@@ -41,20 +41,21 @@ export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay }
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 sm:bottom-8 z-40 max-w-lg mx-auto px-3 sm:px-4 pointer-events-auto transition-all duration-700 animate-in fade-in slide-in-from-bottom-12">
-      <div className="glass-panel-gold rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto shadow-2xl border border-white/20">
+    <div className="fixed inset-x-0 bottom-0 sm:bottom-8 z-40 max-w-lg mx-auto px-2.5 sm:px-4 pointer-events-auto transition-all duration-700 animate-in fade-in slide-in-from-bottom-12">
+      <div className="glass-panel-gold rounded-t-[28px] sm:rounded-3xl p-4 sm:p-7 max-h-[62vh] sm:max-h-[80vh] overflow-y-auto shadow-2xl border border-white/20 pb-8 sm:pb-7 overscroll-contain">
         {/* Nút thu nhỏ góc trên để ngắm trọn vẹn bông hoa 3D */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+        <div className="flex items-center justify-between pb-2.5 border-b border-white/10 mb-3.5">
           <div className="flex items-center gap-1.5 text-xs font-medium text-rose-300">
             <Heart className="w-3.5 h-3.5 fill-rose-400 text-rose-400 animate-pulse" />
-            <span>HAPPY BIRTHDAY</span>
+            <span className="tracking-wide">HAPPY BIRTHDAY</span>
           </div>
           <button
             onClick={() => setIsMinimized(true)}
-            className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
             title="Thu nhỏ để ngắm hoa 3D"
           >
-            <X className="w-4 h-4" />
+            <span>Ngắm hoa 3D</span>
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 

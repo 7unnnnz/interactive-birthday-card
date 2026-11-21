@@ -81,11 +81,11 @@ export const ParticleScene: React.FC<ParticleSceneProps> = ({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // Camera FOV điều chỉnh theo tỉ lệ màn hình (rộng hơn trên mobile portrait)
+    // Camera FOV và vị trí tối ưu đặc biệt cho màn hình dọc điện thoại (Mobile Portrait)
     const isMobile = width < 640;
-    const fov = isMobile ? 55 : 45;
+    const fov = isMobile ? 58 : 45;
     const camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 1000);
-    camera.position.set(0, isMobile ? 0.3 : 0.4, isMobile ? 8.5 : 7.2);
+    camera.position.set(0, isMobile ? 0.15 : 0.4, isMobile ? 10.2 : 7.2);
     cameraRef.current = camera;
 
     // 2. WebGL Renderer
@@ -238,11 +238,15 @@ export const ParticleScene: React.FC<ParticleSceneProps> = ({
         pointsRef.current.rotation.y = autoSpin + currentRotationRef.current.y;
         pointsRef.current.rotation.x = currentRotationRef.current.x;
 
-        // Khi đã nở hoa và hiển thị card, hạ hoa nhẹ xuống làm nền sang trọng
+        // Khi đã nở hoa và hiển thị card:
+        // Trên mobile: nâng hoa lên nửa trên màn hình (y = 0.9) để card hiển thị ở nửa dưới không bị che khuất
+        // Trên desktop: hạ nhẹ hoa xuống làm nền sang trọng
         if (phase === 'revealed') {
-          pointsRef.current.position.y += (-0.6 - pointsRef.current.position.y) * 0.03;
+          const targetY = isMobile ? 0.95 : -0.6;
+          const targetScale = isMobile ? 0.72 : 0.85;
+          pointsRef.current.position.y += (targetY - pointsRef.current.position.y) * 0.03;
           pointsRef.current.scale.setScalar(
-            pointsRef.current.scale.x + (0.85 - pointsRef.current.scale.x) * 0.03
+            pointsRef.current.scale.x + (targetScale - pointsRef.current.scale.x) * 0.03
           );
         }
       }
@@ -326,12 +330,12 @@ export const ParticleScene: React.FC<ParticleSceneProps> = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      {/* Gợi ý tương tác chạm vào bánh kem */}
+      {/* Gợi ý tương tác chạm vào bánh kem (tối ưu cho điện thoại) */}
       {phase === 'cake' && hintVisible && (
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-midnight-900/80 backdrop-blur-md border border-rose-400/30 text-rose-200 text-sm font-medium shadow-lg shadow-rose-950/40 animate-pulse">
-            <Sparkles className="w-4 h-4 text-gold-400 animate-spin-slow" />
-            <span>Chạm vào chiếc bánh kem để gửi điều ước...</span>
+        <div className="absolute bottom-16 sm:bottom-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[90%] max-w-xs flex justify-center">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-midnight-900/85 backdrop-blur-md border border-rose-400/40 text-rose-200 text-xs sm:text-sm font-medium shadow-xl shadow-rose-950/50 animate-pulse text-center">
+            <Sparkles className="w-4 h-4 text-gold-400 shrink-0 animate-spin-slow" />
+            <span>Chạm vào bánh kem để gửi điều ước...</span>
           </div>
         </div>
       )}
