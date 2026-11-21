@@ -7,12 +7,13 @@ import { InvitationGate } from './components/viewer/InvitationGate';
 import { ParticleScene } from './components/viewer/ParticleScene';
 import { GreetingCard } from './components/viewer/GreetingCard';
 import { MusicPlayer } from './components/viewer/MusicPlayer';
+import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [cardData, setCardData] = useState<CardData | null>(null);
-  const [isViewerMode, setIsViewerMode] = useState<boolean>(false);
+  const [cardData, setCardData] = useState<CardData>(DEFAULT_CARD_DATA);
   const [phase, setPhase] = useState<ScenePhase>('gate');
   const [musicStarted, setMusicStarted] = useState<boolean>(false);
+  const [isStudioOpen, setIsStudioOpen] = useState<boolean>(false);
 
   // Kiểm tra URL hash khi load trang
   useEffect(() => {
@@ -20,10 +21,8 @@ export const App: React.FC = () => {
       const dataFromUrl = getCardDataFromUrl();
       if (dataFromUrl) {
         setCardData(dataFromUrl);
-        setIsViewerMode(true);
-        setPhase('gate');
       } else {
-        setIsViewerMode(false);
+        setCardData(DEFAULT_CARD_DATA);
       }
     };
 
@@ -56,13 +55,11 @@ export const App: React.FC = () => {
     setPhase('cake');
   };
 
-  // Nếu đang ở Creator Mode (không có dữ liệu trong URL hash)
-  if (!isViewerMode) {
-    return <CardCreator />;
-  }
-
-  // Nếu đang ở Viewer Mode (người nhận quét mã QR hoặc mở link thiệp)
-  const activeCard = cardData || DEFAULT_CARD_DATA;
+  // Khi người dùng lưu hoặc áp dụng thiệp mới từ Studio
+  const handleApplyNewCard = (newCard: CardData) => {
+    setCardData(newCard);
+    setPhase('cake');
+  };
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-[#080510] select-none">
@@ -70,7 +67,7 @@ export const App: React.FC = () => {
       {phase === 'gate' && (
         <InvitationGate
           onOpen={handleOpenGate}
-          senderName={activeCard.subtitle}
+          senderName={cardData.subtitle}
         />
       )}
 
@@ -85,13 +82,37 @@ export const App: React.FC = () => {
 
       {/* 3. Hiển thị nội dung thiệp Glassmorphism khi hoa đã nở */}
       {(phase === 'flower' || phase === 'revealed') && (
-        <GreetingCard cardData={activeCard} onReplay={handleReplay} />
+        <GreetingCard
+          cardData={cardData}
+          onReplay={handleReplay}
+          onOpenStudio={() => setIsStudioOpen(true)}
+        />
       )}
 
-      {/* 4. Điều khiển Nhạc nền góc màn hình */}
+      {/* 4. Nút mở Studio Tạo / Sửa Thiệp ở góc trên bên trái */}
+      <div className="fixed top-4 left-4 z-40">
+        <button
+          onClick={() => setIsStudioOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full glass-panel text-slate-200 hover:text-gold-300 text-xs font-medium border border-white/15 hover:border-gold-400/40 shadow-lg active:scale-95 transition-all cursor-pointer"
+          title="Tạo thiệp mới hoặc chỉnh sửa thiệp"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+          <span className="hidden xs:inline sm:inline">Tạo / Sửa Thiệp</span>
+        </button>
+      </div>
+
+      {/* 5. Điều khiển Nhạc nền góc trên bên phải */}
       {musicStarted && (
-        <MusicPlayer musicUrl={activeCard.musicUrl} autoPlay={true} />
+        <MusicPlayer musicUrl={cardData.musicUrl} autoPlay={true} />
       )}
+
+      {/* 6. Studio Modal Popup: Tích hợp đầy đủ trên cùng trang index */}
+      <CardCreator
+        isOpen={isStudioOpen}
+        onClose={() => setIsStudioOpen(false)}
+        initialData={cardData}
+        onApplyCard={handleApplyNewCard}
+      />
     </div>
   );
 };

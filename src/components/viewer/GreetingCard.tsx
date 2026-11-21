@@ -5,9 +5,10 @@ import { ChevronLeft, ChevronRight, Heart, Sparkles, X, Maximize2 } from 'lucide
 interface GreetingCardProps {
   cardData: CardData;
   onReplay?: () => void;
+  onOpenStudio?: () => void;
 }
 
-export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay }) => {
+export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay, onOpenStudio }) => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isPhotoLightboxOpen, setIsPhotoLightboxOpen] = useState(false);
@@ -143,12 +144,22 @@ export const GreetingCard: React.FC<GreetingCardProps> = ({ cardData, onReplay }
             </button>
           )}
 
-          <a
-            href="/"
-            className="text-xs text-rose-300/80 hover:text-rose-200 hover:underline transition-colors ml-auto cursor-pointer"
-          >
-            Tự tạo thiệp của riêng bạn →
-          </a>
+          {onOpenStudio ? (
+            <button
+              onClick={onOpenStudio}
+              className="text-xs text-rose-300 hover:text-rose-200 hover:underline transition-colors ml-auto cursor-pointer flex items-center gap-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
+              <span>Sửa / Tự tạo thiệp mới →</span>
+            </button>
+          ) : (
+            <a
+              href="./"
+              className="text-xs text-rose-300/80 hover:text-rose-200 hover:underline transition-colors ml-auto cursor-pointer"
+            >
+              Tự tạo thiệp của riêng bạn →
+            </a>
+          )}
         </div>
       </div>
 

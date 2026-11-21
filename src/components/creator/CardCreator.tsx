@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CardData } from '../../types/card';
 import { DEFAULT_CARD_DATA, MUSIC_PRESETS } from '../../constants/presets';
 import { compressImage } from '../../utils/imageCompressor';
@@ -15,15 +15,42 @@ import {
   Heart,
   Eye,
   CheckCircle2,
+  X,
+  Play
 } from 'lucide-react';
 
-export const CardCreator: React.FC = () => {
-  const [formData, setFormData] = useState<CardData>(DEFAULT_CARD_DATA);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('piano-acoustic');
+interface CardCreatorProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  initialData?: CardData;
+  onApplyCard?: (newCard: CardData) => void;
+}
+
+export const CardCreator: React.FC<CardCreatorProps> = ({
+  isOpen = true,
+  onClose,
+  initialData,
+  onApplyCard,
+}) => {
+  const [formData, setFormData] = useState<CardData>(initialData || DEFAULT_CARD_DATA);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(
+    initialData?.musicPreset || 'piano-acoustic'
+  );
   const [isCompressingImages, setIsCompressingImages] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [showLivePreview, setShowLivePreview] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+      if (initialData.musicPreset) {
+        setSelectedPresetId(initialData.musicPreset);
+      }
+    }
+  }, [initialData]);
+
+  if (!isOpen) return null;
 
   // Xử lý upload ảnh (kéo thả hoặc chọn file)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,42 +119,91 @@ export const CardCreator: React.FC = () => {
     const url = generateCardShareUrl(cardToSave);
     setShareUrl(url);
     setIsQRModalOpen(true);
+
+    if (onApplyCard) {
+      onApplyCard(cardToSave);
+    }
+
+    const hashMatch = url.match(/#card=.+/);
+    if (hashMatch) {
+      window.history.replaceState(null, '', hashMatch[0]);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-midnight-950 via-midnight-900 to-midnight-800 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+  const handleApplyAndClose = () => {
+    const cardToSave: CardData = {
+      ...formData,
+      createdAt: Date.now(),
+    };
+    if (onApplyCard) {
+      onApplyCard(cardToSave);
+    }
+    const url = generateCardShareUrl(cardToSave);
+    const hashMatch = url.match(/#card=.+/);
+    if (hashMatch) {
+      window.history.replaceState(null, '', hashMatch[0]);
+    }
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const content = (
+    <div className="min-h-screen sm:min-h-0 w-full max-w-5xl mx-auto py-6 px-3 sm:px-6 relative">
+      {/* Nút đóng modal nếu ở chế độ popup */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="fixed top-4 right-4 z-50 p-2.5 rounded-full bg-midnight-800/90 hover:bg-midnight-700 text-slate-300 hover:text-white border border-white/20 shadow-xl transition-all cursor-pointer"
+          title="Đóng studio"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Vòng sáng nền mờ trang trí */}
       <div className="fixed top-0 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-gold-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className="max-w-5xl mx-auto">
+      <div>
         {/* Header giới thiệu */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/15 border border-rose-400/25 text-rose-300 text-xs font-medium mb-3">
             <Sparkles className="w-3.5 h-3.5 text-gold-400" />
             <span>Studio Tạo Thiệp Sinh Nhật 3D & Mã QR</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gold-300 via-rose-200 to-gold-400 bg-clip-text text-transparent font-script tracking-wide">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gold-300 via-rose-200 to-gold-400 bg-clip-text text-transparent font-script tracking-wide">
             Interactive Birthday Card Studio
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl mx-auto font-light">
-            Tạo thiệp sinh nhật tương tác bánh kem hạt mịn 3D lung linh, chuyển hoá thành bông hoa nở rộ và gửi trọn vẹn qua mã QR hoặc liên kết chia sẻ.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1.5 max-w-xl mx-auto font-light">
+            Nhập thông tin thiệp sinh nhật của bạn, chọn nhạc và ảnh kỷ niệm để tạo mã QR chia sẻ cho bạn bè.
           </p>
 
-          <div className="flex justify-center gap-3 mt-4">
+          <div className="flex flex-wrap justify-center gap-2.5 mt-3.5">
             <button
               type="button"
               onClick={handleFillTemplate}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gold-300 font-medium transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gold-300 font-medium transition-all cursor-pointer"
             >
               <Wand2 className="w-3.5 h-3.5" />
               <span>Dùng lời chúc mẫu</span>
             </button>
 
+            {onClose && (
+              <button
+                type="button"
+                onClick={handleApplyAndClose}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-xs text-rose-200 font-medium transition-all cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 text-rose-300" />
+                <span>Áp dụng & Xem thiệp ngay</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setShowLivePreview(!showLivePreview)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-rose-300 font-medium transition-all lg:hidden"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-rose-300 font-medium transition-all lg:hidden cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>{showLivePreview ? 'Ẩn xem trước' : 'Xem trước thiệp'}</span>
@@ -342,6 +418,16 @@ export const CardCreator: React.FC = () => {
         onClose={() => setIsQRModalOpen(false)}
         shareUrl={shareUrl}
       />
+    </div>
+  );
+
+  return onClose ? (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      {content}
+    </div>
+  ) : (
+    <div className="min-h-screen bg-gradient-to-b from-midnight-950 via-midnight-900 to-midnight-800 text-slate-100">
+      {content}
     </div>
   );
 };
